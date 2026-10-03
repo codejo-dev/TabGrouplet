@@ -3,6 +3,7 @@
   "name": "Tab Grouplet",
   "version": "1.0",
   "description": "Group tabs automatically with regex rules: custom names and emoji, colors, ordering and minimum tab counts.",
+  "homepage_url": "https://github.com/codejo-dev/TabGrouplet",
   "minimum_chrome_version": "102",
   "permissions": ["tabs", "tabGroups", "storage"],
   "background": {
