@@ -48,6 +48,8 @@ src/theme.css, ui.js shared styles and DOM helpers
 options/            rules editor (live preview against open tabs, URL tester)
 popup/              toolbar popup
 scripts/make-icons.py  regenerates icons/ (needs Pillow)
+scripts/store-assets.mjs  regenerates the Chrome Web Store images in store/ (needs Chrome)
+store/              store images and listing texts (listing.md)
 ```
 
 Run the unit tests (Node 18+):
