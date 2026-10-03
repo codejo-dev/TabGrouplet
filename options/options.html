@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tab Grouplet Rules</title>
+  <link rel="icon" href="../icons/icon32.png">
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img src="../icons/icon48.png" width="32" height="32" alt="">
+        <div>
+          <h1>Tab Grouplet <span id="version" class="version"></span></h1>
+          <p class="muted">Group tabs automatically with regular expressions.</p>
+        </div>
+      </div>
+      <div class="save-area">
+        <span id="status" class="status" role="status" aria-live="polite"></span>
+        <button id="revert" type="button" disabled>Revert</button>
+        <button id="save" type="button" class="primary" disabled title="Save (⌘S / Ctrl+S)">Save</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="paused-banner" class="banner" hidden>
+      Auto-grouping is paused. <button id="resume" type="button">Resume</button>
+    </div>
+
+    <div class="list-head">
+      <div>
+        <h2>Rules</h2>
+        <p class="muted">The first matching rule wins. Click a rule to edit it, drag the handle to change priority.</p>
+      </div>
+      <div class="list-actions">
+        <button id="toggle-all" type="button">Expand all</button>
+        <button id="import" type="button">Import</button>
+        <button id="export" type="button">Export</button>
+        <div class="menu">
+          <button id="add" type="button" class="primary" aria-haspopup="menu" aria-expanded="false">+ Add rule</button>
+          <div id="add-menu" class="menu-pop" role="menu" hidden>
+            <button type="button" role="menuitem" data-template="localhost">
+              <strong>💻 Localhost</strong>
+              <span>Local dev servers, any port.</span>
+              <code>localhost:3000 · 127.0.0.1:8080 → 💻</code>
+            </button>
+            <button type="button" role="menuitem" data-template="lan">
+              <strong>🛜 LAN</strong>
+              <span>Private network addresses (192.168.*, 10.*, 172.16–31.*).</span>
+              <code>192.168.1.1 · 10.0.0.5:8080 → 🛜</code>
+            </button>
+            <button type="button" role="menuitem" data-template="chrome">
+              <strong>⚙️ Chrome pages</strong>
+              <span>chrome:// and extension pages, placed last.</span>
+              <code>chrome://settings · chrome-extension://… → ⚙️</code>
+            </button>
+            <button type="button" role="menuitem" data-template="newtab">
+              <strong>🆕 New tabs</strong>
+              <span>New and blank tabs, placed last. Use position 1 for first.</span>
+              <code>chrome://newtab · about:blank → 🆕</code>
+            </button>
+            <button type="button" role="menuitem" data-template="hostname">
+              <strong>🌐 By hostname</strong>
+              <span>One group per site, without “www.”. From 2 tabs.</span>
+              <code>docs.github.com → docs.github.com</code>
+            </button>
+            <button type="button" role="menuitem" data-template="domain">
+              <strong>🔤 By domain name</strong>
+              <span>One group per domain, without subdomain or ending. From 2 tabs.</span>
+              <code>mail.google.com → google · news.bbc.co.uk → bbc</code>
+            </button>
+            <button type="button" role="menuitem" data-template="subdomain">
+              <strong>⭐ By Subdomain</strong>
+              <span>One group per subdomain. Put your domain in the pattern.</span>
+              <code>api.example.com → api ⭐</code>
+            </button>
+            <button type="button" role="menuitem" data-template="blank">
+              <strong>✏️ Blank rule</strong>
+              <span>Write your own regular expression.</span>
+            </button>
+          </div>
+        </div>
+        <input id="import-file" type="file" accept="application/json,.json" hidden>
+      </div>
+    </div>
+
+    <ol id="rules" class="rules"></ol>
+
+    <div id="empty" class="empty panel" hidden>
+      <p><strong>No rules yet.</strong> Add one from a template to get started:</p>
+      <div class="empty-actions">
+        <button type="button" data-template="localhost">💻 Localhost</button>
+        <button type="button" data-template="lan">🛜 LAN</button>
+        <button type="button" data-template="chrome">⚙️ Chrome pages</button>
+        <button type="button" data-template="newtab">🆕 New tabs</button>
+        <button type="button" data-template="hostname">🌐 By hostname</button>
+        <button type="button" data-template="domain">🔤 By domain name</button>
+        <button type="button" data-template="subdomain">⭐ By Subdomain</button>
+        <button type="button" data-template="blank">✏️ Blank rule</button>
+      </div>
+    </div>
+
+    <section class="panel tester" aria-labelledby="tester-label">
+      <label id="tester-label" for="test-url">Try a URL</label>
+      <input id="test-url" class="mono" type="url" placeholder="https://api.staging.example.com/v1/docs" spellcheck="false" autocomplete="off">
+      <div id="test-result" class="test-result muted">Shows which rule matches and the group name it gets, using your unsaved edits.</div>
+    </section>
+
+    <details class="panel help">
+      <summary>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        How rules work
+        <span class="muted">Name tokens, examples, colors and positions</span>
+      </summary>
+      <div class="help-body">
+        <h3>Matching</h3>
+        <p>Each rule tests a regular expression against the tab's full URL, e.g. <code>https://mail.google.com/mail/u/0</code>. The URL includes the port when it has one (<code>http://localhost:3000/</code>). Matching ignores upper/lower case. Rules are checked from top to bottom and the first match wins. Pinned tabs are never grouped.</p>
+        <h3>Group names</h3>
+        <p>The group name is a template. These tokens are replaced with parts of the match:</p>
+        <table>
+          <tr><td><code>$1</code> … <code>$9</code></td><td>capture group 1–9</td></tr>
+          <tr><td><code>$&lt;name&gt;</code></td><td>named capture group <code>(?&lt;name&gt;…)</code></td></tr>
+          <tr><td><code>$&amp;</code></td><td>the whole match</td></tr>
+          <tr><td><code>$$</code></td><td>a literal dollar sign</td></tr>
+        </table>
+        <p>Tabs whose names come out the same share a group. A fixed name like <code>💻</code> puts every match in one group, while <code>$1</code> makes one group per distinct capture. Emoji work anywhere in the name.</p>
+        <h3>Examples</h3>
+        <table class="examples">
+          <tr><th>Pattern</th><th>Name</th><th>Result</th></tr>
+          <tr><td><code>^https?://([^./:]+)\.corp\.example\.com[:/]</code></td><td><code>$1 🏢</code></td><td>“wiki 🏢”, “jira 🏢”, …</td></tr>
+          <tr><td><code>^https?://(?:localhost|127\.0\.0\.1)[:/]</code></td><td><code>💻</code></td><td>every local tab in one group</td></tr>
+          <tr><td><code>^https?://localhost:(\d+)</code></td><td><code>💻 $1</code></td><td>one group per port: “💻 3000”, “💻 8080”</td></tr>
+          <tr><td><code>^https?://(?:www\.)?([^/:]+)</code></td><td><code>$1</code></td><td>one group per hostname</td></tr>
+          <tr><td><i>see the “By domain name” template</i></td><td><code>$1</code></td><td>“google” for mail.google.com and google.de, “bbc” for news.bbc.co.uk</td></tr>
+          <tr><td><code>github\.com/(?&lt;org&gt;[^/]+)</code></td><td><code>🐙 $&lt;org&gt;</code></td><td>one group per GitHub org</td></tr>
+        </table>
+        <h3>Color, threshold and position</h3>
+        <p><b>Color</b> is optional. On <i>Auto</i>, a new group gets the color least used by the other groups in its window. Chrome only offers these nine colors.</p>
+        <p><b>Group when at least N tabs match</b> counts per window, since Chrome groups can't span windows. Below N the group is dissolved again.</p>
+        <p><b>Position</b> is optional. <code>1</code> puts the group first (after pinned tabs), <code>2</code> second, and so on. Negative numbers count from the right, so <code>-1</code> is last. Groups that share a position follow the order of their rules (higher in the list = further left); groups from the same rule are sorted by name.</p>
+        <h3>Your own groups</h3>
+        <p>Tab Grouplet only manages the groups it creates. Groups you make yourself, and the tabs in them, are left alone. If you drag a tab out of a managed group, it goes back on the next tab change in that window. Use the toolbar popup to pause.</p>
+      </div>
+    </details>
+  </main>
+
+  <div id="emoji-pop" class="emoji-pop" role="dialog" aria-label="Insert emoji" hidden></div>
+
+  <template id="rule-template">
+    <li class="rule">
+      <div class="rule-head">
+        <span class="handle" title="Drag to reorder" aria-hidden="true">⠿</span>
+        <button type="button" class="icon chevron" data-action="toggle" aria-expanded="false" aria-label="Show details" title="Show details">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="rule-index" data-role="index"></span>
+        <label class="switch" title="Enable or disable this rule"><input type="checkbox" data-field="enabled" aria-label="Enabled"><span></span></label>
+        <input class="label-input" data-field="label" placeholder="Rule name (optional)" maxlength="80" aria-label="Rule name">
+        <div class="rule-tools">
+          <button type="button" class="icon" data-action="up" title="Move up" aria-label="Move up">↑</button>
+          <button type="button" class="icon" data-action="down" title="Move down" aria-label="Move down">↓</button>
+          <button type="button" class="icon" data-action="duplicate" title="Duplicate" aria-label="Duplicate">⧉</button>
+          <button type="button" class="icon danger" data-action="delete" title="Delete" aria-label="Delete">✕</button>
+        </div>
+      </div>
+
+      <div class="rule-details">
+        <div class="rule-body">
+          <div class="field">
+            <span class="field-label">Match</span>
+            <div class="pattern-row">
+              <input class="mono pattern" data-field="pattern" placeholder="^https?://([^.]+)\.example\.com" spellcheck="false" autocomplete="off" aria-label="Regular expression">
+            </div>
+            <p class="error" data-role="error" hidden></p>
+          </div>
+
+          <div class="field">
+            <span class="field-label">Group name</span>
+            <div class="title-row">
+              <input data-field="title" placeholder="$1 🚀  (leave empty for a color-only group)" spellcheck="false" aria-label="Group name template">
+              <button type="button" class="emoji-btn" data-action="emoji" title="Insert emoji" aria-label="Insert emoji">😀</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="field-label">Color</span>
+            <div class="swatches" role="radiogroup" aria-label="Group color" data-role="swatches"></div>
+          </div>
+
+          <div class="field-row">
+            <label class="field">
+              <span class="field-label">Group when at least</span>
+              <span class="inline"><input type="number" data-field="minTabs" min="1" max="99" step="1"> <span class="muted">matching tab(s) are open</span></span>
+            </label>
+            <label class="field">
+              <span class="field-label">Position <span class="muted">(optional)</span></span>
+              <span class="inline"><input type="number" data-field="position" min="-99" max="99" step="1" placeholder="—"> <span class="muted">1 = first, −1 = last</span></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="preview" data-role="preview"></div>
+      </div>
+    </li>
+  </template>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "tab-grouplet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chrome extension that groups tabs with regex rules.",
+  "author": "codejo.dev",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

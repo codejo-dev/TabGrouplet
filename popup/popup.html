@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tab Grouplet</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="bar">
+    <img src="../icons/icon32.png" width="20" height="20" alt="">
+    <h1>Tab Grouplet <span id="version" class="version"></span></h1>
+    <label class="switch" title="Turn auto-grouping on or off">
+      <input type="checkbox" id="active" aria-label="Auto-grouping">
+      <span></span>
+    </label>
+  </header>
+
+  <p id="state" class="state"></p>
+
+  <section class="card">
+    <h2>This tab</h2>
+    <div id="current" class="current muted">…</div>
+  </section>
+
+  <div class="actions">
+    <button id="regroup" type="button">Regroup now</button>
+    <button id="ungroup" type="button">Pause &amp; ungroup</button>
+  </div>
+  <button id="settings" type="button" class="primary wide">Edit rules</button>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
