@@ -56,6 +56,10 @@ Run the unit tests (Node 18+):
 npm test
 ```
 
+## Privacy
+
+Tab Grouplet does not collect or transmit any data. Your rules are stored only in your browser. See [PRIVACY.md](PRIVACY.md).
+
 ## License
 
 [MIT](LICENSE) © 2026 codejo.dev
